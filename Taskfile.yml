@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+
+  mongo-up:
+    desc: run docker compose with mongo
+    cmds:
+      - docker compose --file deploy/docker-compose.yml --project-directory ./ up
+
+  mongo-down:
+    desc: stop (down) docker compose with mongo
+    cmds:
+      - docker compose --file deploy/docker-compose.yml --project-directory ./ down
+
+  run:
+    desc: run app
+    cmds:
+      - go run ./cmd/main.go --config config/local.yml
