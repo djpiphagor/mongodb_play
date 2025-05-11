@@ -2,13 +2,20 @@ package entities
 
 import "github.com/pkg/errors"
 
-type EngineType string
+type EngineType uint8
 
 const (
-	Gasoline = EngineType("gasoline engine")
-	Diesel   = EngineType("diesel engine")
-	EV       = EngineType("electrical vehicle")
+	UndefinedType EngineType = iota
+	Gasoline
+	Diesel
+	EV
 )
+
+var EngineTypes = map[string]EngineType{
+	"gasoline engine":  Gasoline,
+	"diesel engine":    Diesel,
+	"electric vehicle": EV,
+}
 
 type Car struct {
 	Brand       string     `bson:"brand"`
@@ -27,7 +34,7 @@ func ValidateCar(c Car) error {
 		return errors.New("empty model")
 	}
 
-	if string(c.Engine) == "" {
+	if c.Engine != UndefinedType {
 		return errors.New("empty engine")
 	}
 
