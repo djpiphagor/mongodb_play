@@ -4,11 +4,13 @@ tasks:
 
   mongo-up:
     desc: run docker compose with mongo
+    aliases: [up, m-up, mup]
     cmds:
       - docker compose --file deploy/docker-compose.yml --project-directory ./ up
 
   mongo-down:
     desc: stop (down) docker compose with mongo
+    aliases: [down, m-down, mdown]
     cmds:
       - docker compose --file deploy/docker-compose.yml --project-directory ./ down
 
@@ -19,12 +21,14 @@ tasks:
 
   test:
     desc: run all tests
+    aliases: [t]
     dir: tests
     cmds:
       - go test -v -count=1 ./...
 
   test100:
     dasc: run all tests 100 times
+    aliases: [t100]
     dir: tests
     cmds:
       - go test -v -count=100 ./...
