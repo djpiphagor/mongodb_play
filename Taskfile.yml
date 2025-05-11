@@ -16,3 +16,28 @@ tasks:
     desc: run app
     cmds:
       - go run ./cmd/main.go --config config/local.yml
+
+  test:
+    desc: run all tests
+    dir: tests
+    cmds:
+      - go test -v -count=1 ./...
+
+  test100:
+    dasc: run all tests 100 times
+    dir: tests
+    cmds:
+      - go test -v -count=100 ./...
+
+  race:
+    desc: run all tests with race flag
+    cmds:
+      - go test -v -race -count=1 ./...
+
+  cover:
+    desc: tests with coverege
+    dir: tests
+    cmds:
+      - defer: rm coverage.out
+      - go test -short -count=1 -race -coverprofile=coverage.out
+      - go tool cover -html=coverage.out
