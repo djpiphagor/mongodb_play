@@ -8,6 +8,7 @@ import (
 	"mongodb_play/internal/config"
 	"os"
 	"os/signal"
+	"runtime/debug"
 
 	"github.com/pkg/errors"
 )
@@ -38,6 +39,7 @@ func run(cfg *config.Config) (exitCode int) {
 	defer func() {
 		if panicErr := recover(); panicErr != nil {
 			slog.With(slog.Any("err", panicErr)).Error("recover after panic")
+			slog.Info(string(debug.Stack()))
 			exitCode = 1
 		}
 	}()
@@ -65,9 +67,9 @@ func cfgpather() (string, error) {
 	var path string
 	flag.StringVar(&path, "config", "", "path to the config file")
 	flag.Parse()
-	if flag.NArg() < 1 {
-		return path, errors.New("no args were detected")
-	}
+	// if flag.NArg() < 1 {
+	//		return path, errors.New("no args were detected")
+	//	}
 	if path == "" {
 		return path, errors.New("empty config path")
 	}

@@ -60,14 +60,14 @@ func (app *App) Run(ctx context.Context) error {
 	if err != nil {
 		slog.Error("error adding car1")
 	} else {
-		slog.With(slog.String("_id", id)).Info("successfully added")
+		slog.With(slog.String("_id", id)).Info("car1 is successfully added")
 	}
 
 	id, err = add.Action(ctx, car2)
 	if err != nil {
 		slog.Error("error adding car2")
 	} else {
-		slog.With(slog.String("_id", id)).Info("successfully added")
+		slog.With(slog.String("_id", id)).Info("car2 is successfully added")
 	}
 
 	err = del.Action(ctx, "A001AA198")
@@ -85,7 +85,7 @@ func (app *App) Run(ctx context.Context) error {
 
 	err = modify.Action(ctx, car3)
 	if err != nil {
-		slog.Error("error")
+		slog.Error("error modify")
 	}
 
 	return nil

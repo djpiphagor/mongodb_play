@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"mongodb_play/internal/domain/entities"
 
@@ -25,18 +26,20 @@ func NewRepo(mongoDB *mongo.Client, db string, col string) *Repo {
 
 func (r *Repo) AddCar(ctx context.Context, c entities.Car) (string, error) {
 	_, err := r.FindCarByNumberPlate(ctx, c.NumberPlate)
-	if errors.As(err, mongo.ErrNoDocuments) {
-		return "", errors.Wrap(err, "can't add, the car with this number plate already exists")
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		res, e := r.collection.InsertOne(ctx, c)
+		if e != nil {
+			return "", errors.Wrap(err, "error inserting")
+		}
+		v, ok := res.InsertedID.(primitive.ObjectID)
+		if !ok {
+			return "", errors.Wrap(err, "error getting _id")
+		}
+		return v.String(), nil
+	} else if err != nil {
+		slog.Error(err.Error())
 	}
-	res, err := r.collection.InsertOne(ctx, c)
-	if err != nil {
-		return "", errors.Wrap(err, "error inserting")
-	}
-	v, ok := res.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return "", errors.Wrap(err, "error getting _id")
-	}
-	return v.String(), nil
+	return "", fmt.Errorf("can't add, the car with \"%s\" number plate already exists", c.NumberPlate)
 }
 
 func (r *Repo) DeleteCar(ctx context.Context, nPlate string) error {
@@ -50,7 +53,7 @@ func (r *Repo) DeleteCar(ctx context.Context, nPlate string) error {
 }
 
 func (r *Repo) ModifyCar(ctx context.Context, c entities.Car) error {
-	opts := options.Replace().SetUpsert(true)
+	opts := options.Replace().SetUpsert(false)
 	filter := bson.D{{"number_plate", c.NumberPlate}}
 	replacement := bson.D{
 		{"brand", c.Brand},
@@ -78,10 +81,7 @@ func (r *Repo) FindCarByNumberPlate(ctx context.Context, nPlate string) (entitie
 	res := entities.Car{}
 	err := r.collection.FindOne(ctx, filter).Decode(&res)
 	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return res, errors.Wrapf(err, "there is no car with number plate: %s", nPlate)
-		}
-		return res, errors.Wrapf(err, "unexpected error while trying to find car with number plate: %s", nPlate)
+		return res, err
 	}
 	return res, nil
 }
