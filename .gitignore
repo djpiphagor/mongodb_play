@@ -39,6 +39,7 @@
 !*.go
 !go.sum
 !go.mod
+!*.js
 
 !README.md
 !LICENSE
