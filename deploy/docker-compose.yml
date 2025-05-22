@@ -3,6 +3,8 @@
 services:
 
   mongo:
+    build:
+      context: .
     image: mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -11,7 +13,8 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - mongo_data:/data/db
+    #  - mongo_data:/data/db
+      - ./scripts/mongodb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   mongo-express:
     image: mongo-express
@@ -23,5 +26,5 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
       ME_CONFIG_BASICAUTH: false
 
-  volumes:
-    mongo_data:
+#volumes:
+#  mongo_data:

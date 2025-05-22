@@ -22,7 +22,7 @@ tasks:
   test:
     desc: run all tests
     aliases: [t]
-    dir: tests
+    #dir: tests
     cmds:
       - go test -v -count=1 ./...
 
@@ -40,8 +40,9 @@ tasks:
 
   cover:
     desc: tests with coverege
-    dir: tests
+    #dir: tests
     cmds:
-      - defer: rm coverage.out
-      - go test -short -count=1 -race -coverprofile=coverage.out
+      #- defer: rm coverage.out
+      - go test -short -count=1 -race -coverprofile=coverage.out ./...
+      #- export BROWSER=firefox
       - go tool cover -html=coverage.out

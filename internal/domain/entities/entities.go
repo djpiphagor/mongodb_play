@@ -11,10 +11,11 @@ const (
 	EV
 )
 
-var EngineTypes = map[string]EngineType{
-	"gasoline engine":  Gasoline,
-	"diesel engine":    Diesel,
-	"electric vehicle": EV,
+var EngineTypes = map[EngineType]string{
+	UndefinedType: "undefined",
+	Gasoline:      "gasoline engine",
+	Diesel:        "diesel engine",
+	EV:            "electric vehicle",
 }
 
 type Car struct {
@@ -26,25 +27,27 @@ type Car struct {
 }
 
 func ValidateCar(c Car) error {
+	var err error
+
 	if c.Brand == "" {
-		return errors.New("empty brand")
+		err = errors.Wrap(err, "empty brand")
 	}
 
 	if c.Model == "" {
-		return errors.New("empty model")
+		err = errors.Wrap(err, "empty model")
 	}
 
-	if c.Engine != UndefinedType {
-		return errors.New("empty engine")
+	if _, ok := EngineTypes[c.Engine]; !ok {
+		err = errors.Wrap(err, "empty engine")
 	}
 
 	if c.EnginePower == 0 {
-		return errors.New("empty engine power")
+		err = errors.Wrap(err, "empty engine power")
 	}
 
 	if c.NumberPlate == "" {
-		return errors.New("empty number plate")
+		err = errors.Wrap(err, "empty number plate")
 	}
 
-	return nil
+	return err
 }

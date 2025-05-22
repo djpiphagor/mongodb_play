@@ -2,23 +2,34 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
+	"net"
+	"net/url"
+	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func New(ctx context.Context, connString string) (*mongo.Client, error) {
-	ctxWTO, cancel := context.WithTimeout(ctx, 20*time.Second)
+	ctxWTO, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	if cl, err := mongo.Connect(ctxWTO, options.Client().ApplyURI(connString)); err != nil {
-		return nil, err
-	} else {
-		return cl, nil
+
+	cl, err := mongo.Connect(ctxWTO, options.Client().ApplyURI(connString))
+	if err != nil {
+		return nil, errors.Wrap(err, "canot connect to mongo db")
 	}
+	return cl, nil
 }
 
 func MakeConnString(user, pass string, host string, port uint) string {
-	return fmt.Sprintf("mongodb://%s:%s@%s:%d", user, pass, host, port)
+	conn := url.URL{
+		Scheme: "mongodb",
+		User:   url.UserPassword(user, pass),
+		Host:   net.JoinHostPort(host, strconv.Itoa(int(port))),
+	}
+	slog.Info(conn.String())
+	return conn.String()
 }

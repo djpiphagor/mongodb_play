@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"log/slog"
 	"math/rand/v2"
 	"mongodb_play/internal/domain/entities"
 	addcar "mongodb_play/internal/domain/usecases/add_car"
@@ -45,6 +46,9 @@ func TestAddCar_HappyPass(t *testing.T) {
 	add := addcar.New(mongoRepo)
 
 	_, err = add.Action(ctx, c)
+	if err != nil {
+		slog.Error(err.Error())
+	}
 
 	require.NoError(t, err)
 
