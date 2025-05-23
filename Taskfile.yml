@@ -19,6 +19,11 @@ tasks:
     cmds:
       - go run ./cmd/main.go --config config/local.yml
 
+  lint:
+    desc: run static analysis
+    cmds:
+      - golangci-lint run --fix
+
   test:
     desc: run all tests
     aliases: [t]

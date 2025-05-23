@@ -6,3 +6,4 @@ mongodb:
   password: "example"
   database: "garage"
   collection: "cars"
+  conntimeout: 5s

@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := applogger(cfg.Env); err != nil {
+	if err = applogger(cfg.Env); err != nil {
 		slog.With(slog.Any("err", err)).Error("app logger error")
 		os.Exit(1)
 	}
@@ -35,7 +35,6 @@ func main() {
 }
 
 func run(cfg *config.Config) (exitCode int) {
-
 	defer func() {
 		if panicErr := recover(); panicErr != nil {
 			slog.With(slog.Any("err", panicErr)).Error("recover after panic")

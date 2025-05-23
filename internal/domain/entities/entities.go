@@ -26,28 +26,43 @@ type Car struct {
 	NumberPlate string     `bson:"number_plate"`
 }
 
+var (
+	ErrEmptyBrand       = errors.New("empty brand")
+	ErrEmptyModel       = errors.New("empty model")
+	ErrEmptyEngine      = errors.New("empty engine")
+	ErrEmptyEnginePower = errors.New("empty engine power")
+	ErrEmptyNumberPlate = errors.New("empty number plate")
+)
+
 func ValidateCar(c Car) error {
 	var err error
 
 	if c.Brand == "" {
-		err = errors.Wrap(err, "empty brand")
+		err = ErrWrapper(err, ErrEmptyBrand.Error())
 	}
 
 	if c.Model == "" {
-		err = errors.Wrap(err, "empty model")
+		err = ErrWrapper(err, ErrEmptyModel.Error())
 	}
 
 	if _, ok := EngineTypes[c.Engine]; !ok {
-		err = errors.Wrap(err, "empty engine")
+		err = ErrWrapper(err, ErrEmptyEngine.Error())
 	}
 
 	if c.EnginePower == 0 {
-		err = errors.Wrap(err, "empty engine power")
+		err = ErrWrapper(err, ErrEmptyEnginePower.Error())
 	}
 
 	if c.NumberPlate == "" {
-		err = errors.Wrap(err, "empty number plate")
+		err = ErrWrapper(err, ErrEmptyNumberPlate.Error())
 	}
 
 	return err
+}
+
+func ErrWrapper(err error, msg string) error {
+	if err != nil {
+		return errors.Wrap(err, msg)
+	}
+	return errors.New(msg)
 }

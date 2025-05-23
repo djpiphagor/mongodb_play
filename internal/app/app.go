@@ -30,7 +30,9 @@ func (app *App) Run(ctx context.Context) error {
 			app.cfg.MongoDB.Username,
 			app.cfg.MongoDB.Password,
 			app.cfg.MongoDB.Host,
-			app.cfg.MongoDB.Port))
+			app.cfg.MongoDB.Port),
+		app.cfg.MongoDB.ConnTimeout,
+	)
 	if err != nil {
 		return errors.Wrap(err, "error mongo db connect")
 	}

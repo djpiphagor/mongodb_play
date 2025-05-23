@@ -13,6 +13,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	fieldBrand       = "brand"
+	fieldModel       = "model"
+	fieldEngine      = "engine"
+	fieldEnginePower = "engine_power"
+	fieldNumberPlate = "number_plate"
+)
+
+type Filter map[string]any
+
 type Repo struct {
 	collection *mongo.Collection
 }
@@ -24,7 +34,19 @@ func NewRepo(mongoDB *mongo.Client, db string, col string) *Repo {
 	}
 }
 
+func (r *Repo) FindCarByNumberPlate(ctx context.Context, nPlate string) (entities.Car, error) {
+	// filter := bson.D{{fieldNumberPlate, nPlate}}
+	filter := bson.M{fieldNumberPlate: nPlate}
+	res := entities.Car{}
+	err := r.collection.FindOne(ctx, filter).Decode(&res)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
 func (r *Repo) AddCar(ctx context.Context, c entities.Car) (string, error) {
+	snap := "repo.AddCar"
 	_, err := r.FindCarByNumberPlate(ctx, c.NumberPlate)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		res, e := r.collection.InsertOne(ctx, c)
@@ -37,30 +59,30 @@ func (r *Repo) AddCar(ctx context.Context, c entities.Car) (string, error) {
 		}
 		return v.String(), nil
 	} else if err != nil {
-		slog.Error(err.Error())
+		slog.With(slog.String("snap", snap)).ErrorContext(ctx, err.Error())
 	}
 	return "", fmt.Errorf("can't add, the car with \"%s\" number plate already exists", c.NumberPlate)
 }
 
 func (r *Repo) DeleteCar(ctx context.Context, nPlate string) error {
-	filter := bson.D{{"number_plate", nPlate}}
+	filter := bson.M{fieldNumberPlate: nPlate}
 	res, err := r.collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return errors.Wrapf(err, "error deleting car with number plate: %s", nPlate)
 	}
-	slog.With(slog.Int64("count", res.DeletedCount)).Info("the number of documents deleted")
+	slog.With(slog.Int64("count", res.DeletedCount)).InfoContext(ctx, "the number of documents deleted")
 	return nil
 }
 
 func (r *Repo) ModifyCar(ctx context.Context, c entities.Car) error {
 	opts := options.Replace().SetUpsert(false)
-	filter := bson.D{{"number_plate", c.NumberPlate}}
+	filter := Filter{fieldNumberPlate: c.NumberPlate}
 	replacement := bson.D{
-		{"brand", c.Brand},
-		{"model", c.Model},
-		{"engine", c.Engine},
-		{"number_plate", c.NumberPlate},
-		{"engine_power", c.EnginePower},
+		primitive.E{Key: fieldBrand, Value: c.Brand},
+		primitive.E{Key: fieldModel, Value: c.Model},
+		primitive.E{Key: fieldEngine, Value: c.Engine},
+		primitive.E{Key: fieldNumberPlate, Value: c.NumberPlate},
+		primitive.E{Key: fieldEnginePower, Value: c.EnginePower},
 	}
 	res, err := r.collection.ReplaceOne(ctx, filter, replacement, opts)
 	if err != nil {
@@ -71,17 +93,7 @@ func (r *Repo) ModifyCar(ctx context.Context, c entities.Car) error {
 		return nil
 	}
 	if res.UpsertedCount != 0 {
-		slog.With(slog.Any("id", res.UpsertedID)).Info("inserted a new document")
+		slog.With(slog.Any("id", res.UpsertedID)).InfoContext(ctx, "inserted a new document")
 	}
 	return nil
-}
-
-func (r *Repo) FindCarByNumberPlate(ctx context.Context, nPlate string) (entities.Car, error) {
-	filter := bson.D{{"number_plate", nPlate}}
-	res := entities.Car{}
-	err := r.collection.FindOne(ctx, filter).Decode(&res)
-	if err != nil {
-		return res, err
-	}
-	return res, nil
 }

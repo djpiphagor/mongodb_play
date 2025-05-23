@@ -1,4 +1,4 @@
-package tests
+package tests_test
 
 import (
 	"log/slog"
@@ -8,6 +8,8 @@ import (
 	mongodb "mongodb_play/internal/drivers/mongo_db"
 	"mongodb_play/internal/infrastructure/repo"
 	"mongodb_play/tests/suits"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -15,16 +17,54 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddCar_HappyPass(t *testing.T) {
+func GeterateRandomCar(t *testing.T) entities.Car {
+	t.Helper()
+
+	// generate fake car number
+	sb := &strings.Builder{}
+	sb.WriteString(
+		strings.ToUpper(
+			gofakeit.Letter(),
+		),
+	)
+	sb.WriteString(
+		strconv.Itoa(
+			gofakeit.Number(100, 999),
+		),
+	)
+	sb.WriteString(
+		strings.ToUpper(
+			gofakeit.LetterN(2),
+		),
+	)
+	sb.WriteString(
+		strconv.Itoa(
+			gofakeit.Number(10, 777),
+		),
+	)
+
+	// fake car
 	var c entities.Car
-	plates := []string{"E456TT777", "O876CC198", "X261OP159", "A123BE78"}
 	fakeCar := gofakeit.Car()
 	c.Brand = fakeCar.Brand
 	c.Model = fakeCar.Model
-	c.Engine = entities.Diesel
 	c.EnginePower = 100 * rand.Float32()
-	c.NumberPlate = gofakeit.RandomString(plates)
+	c.NumberPlate = sb.String()
 
+	// random engine type
+	switch {
+	case c.EnginePower > 80:
+		c.Engine = entities.Gasoline
+	case c.EnginePower > 50:
+		c.Engine = entities.Diesel
+	case c.EnginePower > 20:
+		c.Engine = entities.EV
+	}
+
+	return c
+}
+
+func TestAddCar_HappyPass(t *testing.T) {
 	ctx, s := suits.New(t)
 
 	mongoConnStr := mongodb.MakeConnString(
@@ -33,7 +73,7 @@ func TestAddCar_HappyPass(t *testing.T) {
 		s.Config.MongoDB.Host,
 		s.Config.MongoDB.Port,
 	)
-	mongoClient, err := mongodb.New(ctx, mongoConnStr)
+	mongoClient, err := mongodb.New(ctx, mongoConnStr, s.Config.MongoDB.ConnTimeout)
 	if err != nil {
 		t.Error("can't connect to mongo db")
 	}
@@ -45,6 +85,7 @@ func TestAddCar_HappyPass(t *testing.T) {
 
 	add := addcar.New(mongoRepo)
 
+	c := GeterateRandomCar(t)
 	_, err = add.Action(ctx, c)
 	if err != nil {
 		slog.Error(err.Error())
@@ -58,15 +99,6 @@ func TestAddCar_HappyPass(t *testing.T) {
 }
 
 func TestAdd2TheSameCars_Failed(t *testing.T) {
-	var c entities.Car
-	plates := []string{"E456TT777", "O876CC198", "X261OP159", "A123BE78"}
-	fakeCar := gofakeit.Car()
-	c.Brand = fakeCar.Brand
-	c.Model = fakeCar.Model
-	c.Engine = entities.Diesel
-	c.EnginePower = 100 * rand.Float32()
-	c.NumberPlate = gofakeit.RandomString(plates)
-
 	ctx, s := suits.New(t)
 
 	mongoConnStr := mongodb.MakeConnString(
@@ -75,7 +107,7 @@ func TestAdd2TheSameCars_Failed(t *testing.T) {
 		s.Config.MongoDB.Host,
 		s.Config.MongoDB.Port,
 	)
-	mongoClient, err := mongodb.New(ctx, mongoConnStr)
+	mongoClient, err := mongodb.New(ctx, mongoConnStr, s.Config.MongoDB.ConnTimeout)
 	if err != nil {
 		t.Error("can't connect to mongo db")
 	}
@@ -87,6 +119,7 @@ func TestAdd2TheSameCars_Failed(t *testing.T) {
 
 	add := addcar.New(mongoRepo)
 
+	c := GeterateRandomCar(t)
 	_, err = add.Action(ctx, c)
 	if err != nil {
 		slog.Error(err.Error())

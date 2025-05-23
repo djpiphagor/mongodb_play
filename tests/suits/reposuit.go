@@ -5,7 +5,6 @@ import (
 	"mongodb_play/internal/config"
 	mongodb "mongodb_play/internal/drivers/mongo_db"
 	"testing"
-	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -24,7 +23,7 @@ func New(t *testing.T) (context.Context, *MongoDBSuit) {
 	if err != nil {
 		t.Errorf("incorrect config file")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.MongoDB.ConnTimeout)
 
 	t.Cleanup(
 		func() {
@@ -40,6 +39,7 @@ func New(t *testing.T) (context.Context, *MongoDBSuit) {
 			cfg.MongoDB.Host,
 			cfg.MongoDB.Port,
 		),
+		cfg.MongoDB.ConnTimeout,
 	)
 
 	if err != nil {
