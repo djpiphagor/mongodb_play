@@ -8,6 +8,7 @@ import (
 
 type garage interface {
 	DeleteCar(context.Context, string) error
+	SetCollection(context.Context, string) error
 }
 
 type Usecase struct {
@@ -20,7 +21,10 @@ func New(g garage) *Usecase {
 	}
 }
 
-func (u *Usecase) Action(ctx context.Context, nPlate string) error {
+func (u *Usecase) Action(ctx context.Context, collName string, nPlate string) error {
+	if e := u.garage.SetCollection(ctx, collName); e != nil {
+		return errors.Wrap(e, "cant set collection")
+	}
 	if nPlate == "" {
 		return errors.New("got empty number plate to del car")
 	}

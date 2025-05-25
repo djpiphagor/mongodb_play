@@ -2,17 +2,22 @@ package suits
 
 import (
 	"context"
+	"math/rand/v2"
 	"mongodb_play/internal/config"
+	"mongodb_play/internal/domain/entities"
 	mongodb "mongodb_play/internal/drivers/mongo_db"
+	"strconv"
+	"strings"
 	"testing"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type MongoDBSuit struct {
 	*testing.T
-	Config     *config.Config
-	Collection *mongo.Collection
+	Config *config.Config
+	Client *mongo.Client
 }
 
 func New(t *testing.T) (context.Context, *MongoDBSuit) {
@@ -47,8 +52,55 @@ func New(t *testing.T) (context.Context, *MongoDBSuit) {
 	}
 
 	return ctx, &MongoDBSuit{
-		T:          t,
-		Config:     cfg,
-		Collection: mongoConn.Database(cfg.MongoDB.Database).Collection(cfg.MongoDB.Collection),
+		T:      t,
+		Config: cfg,
+		Client: mongoConn,
 	}
+}
+
+func GeterateRandomCar(t *testing.T) entities.Car {
+	t.Helper()
+
+	// generate fake car number
+	sb := &strings.Builder{}
+	sb.WriteString(
+		strings.ToUpper(
+			gofakeit.Letter(),
+		),
+	)
+	sb.WriteString(
+		strconv.Itoa(
+			gofakeit.Number(100, 999),
+		),
+	)
+	sb.WriteString(
+		strings.ToUpper(
+			gofakeit.LetterN(2),
+		),
+	)
+	sb.WriteString(
+		strconv.Itoa(
+			gofakeit.Number(10, 777),
+		),
+	)
+
+	// fake car
+	var c entities.Car
+	fakeCar := gofakeit.Car()
+	c.Brand = fakeCar.Brand
+	c.Model = fakeCar.Model
+	c.EnginePower = 100 * rand.Float32()
+	c.NumberPlate = sb.String()
+
+	// random engine type
+	switch {
+	case c.EnginePower > 80:
+		c.Engine = entities.Gasoline
+	case c.EnginePower > 50:
+		c.Engine = entities.Diesel
+	case c.EnginePower > 20:
+		c.Engine = entities.EV
+	}
+
+	return c
 }

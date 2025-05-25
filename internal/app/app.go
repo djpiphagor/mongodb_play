@@ -37,7 +37,8 @@ func (app *App) Run(ctx context.Context) error {
 		return errors.Wrap(err, "error mongo db connect")
 	}
 
-	repo := repo.NewRepo(mongoConn, app.cfg.MongoDB.Database, app.cfg.MongoDB.Collection)
+	repo := repo.NewRepo(mongoConn, app.cfg.MongoDB.Database)
+	collection := app.cfg.MongoDB.Collection
 
 	add := addcar.New(repo)
 	del := deletecar.New(repo)
@@ -58,21 +59,21 @@ func (app *App) Run(ctx context.Context) error {
 		NumberPlate: "B001BB777",
 	}
 
-	id, err := add.Action(ctx, car1)
+	id, err := add.Action(ctx, collection, car1)
 	if err != nil {
 		slog.Error("error adding car1")
 	} else {
 		slog.With(slog.String("_id", id)).Info("car1 is successfully added")
 	}
 
-	id, err = add.Action(ctx, car2)
+	id, err = add.Action(ctx, collection, car2)
 	if err != nil {
 		slog.Error("error adding car2")
 	} else {
 		slog.With(slog.String("_id", id)).Info("car2 is successfully added")
 	}
 
-	err = del.Action(ctx, "A001AA198")
+	err = del.Action(ctx, collection, "A001AA198")
 	if err != nil {
 		slog.Error("error deleting A001AA198")
 	}
@@ -85,7 +86,7 @@ func (app *App) Run(ctx context.Context) error {
 		NumberPlate: "A001AA198",
 	}
 
-	err = modify.Action(ctx, car3)
+	err = modify.Action(ctx, collection, car3)
 	if err != nil {
 		slog.Error("error modify")
 	}

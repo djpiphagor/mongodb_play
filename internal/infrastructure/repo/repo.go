@@ -24,17 +24,34 @@ const (
 type Filter map[string]any
 
 type Repo struct {
+	garage     *mongo.Database
 	collection *mongo.Collection
 }
 
-func NewRepo(mongoDB *mongo.Client, db string, col string) *Repo {
-	collection := mongoDB.Database(db).Collection(col)
+func NewRepo(mongoDB *mongo.Client, dbName string) *Repo {
+	db := mongoDB.Database(dbName)
 	return &Repo{
-		collection: collection,
+		garage: db,
 	}
 }
 
+func (r *Repo) SetCollection(ctx context.Context, colName string) error {
+	colls, err := r.garage.ListCollectionNames(ctx, bson.M{"name": colName})
+	if err != nil {
+		return errors.Wrap(err, "failed to get the list of collections")
+	}
+	if len(colls) == 1 {
+		r.collection = r.garage.Collection(colName)
+		return nil
+	}
+	slog.With(slog.String("coll name", colName)).Error("collection is not found")
+	return errors.New("collection is not found")
+}
+
 func (r *Repo) FindCarByNumberPlate(ctx context.Context, nPlate string) (entities.Car, error) {
+	if r.collection == nil {
+		return entities.Car{}, errors.New("collection is not set")
+	}
 	// filter := bson.D{{fieldNumberPlate, nPlate}}
 	filter := bson.M{fieldNumberPlate: nPlate}
 	res := entities.Car{}
@@ -46,6 +63,9 @@ func (r *Repo) FindCarByNumberPlate(ctx context.Context, nPlate string) (entitie
 }
 
 func (r *Repo) AddCar(ctx context.Context, c entities.Car) (string, error) {
+	if r.collection == nil {
+		return "", errors.New("collection is not set")
+	}
 	snap := "repo.AddCar"
 	_, err := r.FindCarByNumberPlate(ctx, c.NumberPlate)
 	if errors.Is(err, mongo.ErrNoDocuments) {
@@ -65,6 +85,9 @@ func (r *Repo) AddCar(ctx context.Context, c entities.Car) (string, error) {
 }
 
 func (r *Repo) DeleteCar(ctx context.Context, nPlate string) error {
+	if r.collection == nil {
+		return errors.New("collection is not set")
+	}
 	filter := bson.M{fieldNumberPlate: nPlate}
 	res, err := r.collection.DeleteOne(ctx, filter)
 	if err != nil {
@@ -75,6 +98,9 @@ func (r *Repo) DeleteCar(ctx context.Context, nPlate string) error {
 }
 
 func (r *Repo) ModifyCar(ctx context.Context, c entities.Car) error {
+	if r.collection == nil {
+		return errors.New("collection is not set")
+	}
 	opts := options.Replace().SetUpsert(false)
 	filter := Filter{fieldNumberPlate: c.NumberPlate}
 	replacement := bson.D{
