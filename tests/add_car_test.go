@@ -12,17 +12,15 @@ import (
 
 func TestAddCar_HappyPass(t *testing.T) {
 	ctx, s := suits.New(t)
-
-	mongoRepo := repo.NewRepo(
-		s.Client,
-		s.Config.MongoDB.Database,
-	)
+	mongoRepo := repo.NewRepo(s.Client, s.Config.MongoDB.Database)
 	add := addcar.New(mongoRepo)
-
 	c := suits.GeterateRandomCar(t)
+	// Here we're trying to add a car.
+	// It has to end up with no error.
 	_, err := add.Action(ctx, s.Config.MongoDB.Collection, c)
 	require.NoError(t, err)
-
+	// Here we're searching the car we've just added.
+	// It has to end up with no error.
 	foundCar, err := mongoRepo.FindCarByNumberPlate(ctx, c.NumberPlate)
 	require.NoError(t, err)
 	assert.Equal(t, c.NumberPlate, foundCar.NumberPlate)
@@ -31,17 +29,16 @@ func TestAddCar_HappyPass(t *testing.T) {
 func TestAdd2TheSameCars_Failed(t *testing.T) {
 	ctx, s := suits.New(t)
 
-	mongoRepo := repo.NewRepo(
-		s.Client,
-		s.Config.MongoDB.Database,
-	)
-	add := addcar.New(mongoRepo)
-
+	mongoRepo := repo.NewRepo(s.Client, s.Config.MongoDB.Database)
+	addCarUC := addcar.New(mongoRepo)
 	c := suits.GeterateRandomCar(t)
-	_, err := add.Action(ctx, s.Config.MongoDB.Collection, c)
+	// Here we're trying to add a car to DB.
+	// It has to end up with no error.
+	_, err := addCarUC.Action(ctx, s.Config.MongoDB.Collection, c)
 	require.NoError(t, err)
-	// here trying to add the same car.
+	// Here we're trying to add the same car again.
 	// It has to end up with an err.
-	_, err = add.Action(ctx, s.Config.MongoDB.Collection, c)
+	// Cos we can't add a car with the same number plate twice.
+	_, err = addCarUC.Action(ctx, s.Config.MongoDB.Collection, c)
 	require.Error(t, err)
 }

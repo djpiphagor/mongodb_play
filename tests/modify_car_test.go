@@ -18,11 +18,12 @@ func TestModifyCar(t *testing.T) {
 	testCar := suits.GeterateRandomCar(t)
 	emptyCar := entities.Car{}
 	emptyCar.Engine = entities.EngineType(10)
-
+	// First, we're trying to add a car to Mongo.
+	// It has to end up with no error.
 	addCarUC := addcar.New(mongoRepo)
 	_, err := addCarUC.Action(ctx, s.Config.MongoDB.Collection, testCar)
 	require.NoError(t, err)
-
+	// Here, we're trying to modify the car, using the same number plate.
 	modifyCarUC := modifycar.New(mongoRepo)
 	testCarBrand := "test brand"
 	testCar.Brand = testCarBrand
